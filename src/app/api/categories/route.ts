@@ -11,7 +11,6 @@ export async function GET() {
         id: true,
         name: true,
         slug: true,
-        image: true,
         sortOrder: true,
       },
     });
@@ -32,3 +31,4 @@ export async function GET() {
     );
   }
 }
+
