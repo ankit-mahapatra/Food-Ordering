@@ -1,6 +1,6 @@
 # Ember & Crust
 
-A responsive restaurant food-ordering application built with **Next.js, TypeScript, Tailwind CSS, Prisma and PostgreSQL**.
+A responsive restaurant food-ordering application built with **Next.js, TypeScript, Tailwind CSS, Prisma, and PostgreSQL**.
 
 ## Features
 
@@ -14,7 +14,7 @@ A responsive restaurant food-ordering application built with **Next.js, TypeScri
 * Increase/decrease quantity
 * Remove items from cart
 * Cart persists after refresh
-* Subtotal, tax and delivery fee calculation
+* Subtotal, tax, and delivery fee calculation
 * Checkout form with validation
 * Place order
 * Order success confirmation with order number
@@ -73,7 +73,7 @@ The application uses the **Next.js App Router**.
 * Customer pages are located under `src/app`.
 * API endpoints are implemented using Next.js Route Handlers under `src/app/api`.
 * Prisma is used for database access.
-* PostgreSQL stores menu, category and order data.
+* PostgreSQL stores menu, category, and order data.
 * Zustand is used for persistent client-side cart state.
 * Admin authentication uses environment-based credentials and an HTTP-only session cookie.
 * Protected admin API routes verify the admin session before allowing access or updating orders.
@@ -82,11 +82,19 @@ The application uses the **Next.js App Router**.
 
 Create a `.env` file in the project root.
 
-```text
+```env
 DATABASE_URL=your_postgresql_connection_string
 ADMIN_EMAIL=your_admin_email
 ADMIN_PASSWORD=your_admin_password
 ```
+
+### Required Variables
+
+| Variable         | Purpose                               |
+| ---------------- | ------------------------------------- |
+| `DATABASE_URL`   | PostgreSQL database connection string |
+| `ADMIN_EMAIL`    | Email used for admin login            |
+| `ADMIN_PASSWORD` | Password used for admin login         |
 
 Do not commit the `.env` file to GitHub.
 
@@ -97,7 +105,7 @@ A `.env.example` file is provided to show the required environment variables wit
 ### 1. Clone the repository
 
 ```bash
-git clone YOUR_GITHUB_REPOSITORY_URL
+git clone https://github.com/ankit-mahapatra/Food-Ordering.git
 cd food-ordering
 ```
 
@@ -109,9 +117,9 @@ npm install
 
 ### 3. Configure environment variables
 
-Create a `.env` file and add:
+Create a `.env` file in the project root and add:
 
-```text
+```env
 DATABASE_URL=your_postgresql_connection_string
 ADMIN_EMAIL=your_admin_email
 ADMIN_PASSWORD=your_admin_password
@@ -153,7 +161,7 @@ Open:
 
 http://localhost:3000/admin
 
-Admin credentials are configured through `ADMIN_EMAIL` and `ADMIN_PASSWORD` environment variables.
+Admin credentials are configured through the `ADMIN_EMAIL` and `ADMIN_PASSWORD` environment variables.
 
 ## Assumptions
 
@@ -183,3 +191,8 @@ The PostgreSQL database must be accessible from the deployed application.
 ## Assessment
 
 Developed for the **Tenacious Techies Private Limited** technical assessment.
+# AI/editor generated files
+
+.agents/
+.claude/
+.windsurf/
