@@ -1,167 +1,123 @@
-import { prisma } from "../../../lib/prisma";
-import { NextResponse } from "next/server";
-
-export async function GET() {
-  try {
-    const orders = await prisma.order.findMany({
-      include: {
-        items: true,
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
-
-    return NextResponse.json({
-      success: true,
-      orders,
-    });
-  } catch (error) {
-    console.error("Get orders error:", error);
-
-    return NextResponse.json(
-      {
-        success: false,
-        message: "Failed to fetch orders",
-      },
-      { status: 500 }
-    );
-  }
+generator client {
+provider = "prisma-client"
+output   = "../src/generated/prisma"
 }
 
-export async function POST(request: Request) {
-  try {
-    const body = await request.json();
-
-    const {
-      customerName,
-      customerEmail,
-      customerPhone,
-      address,
-      items,
-    } = body;
-
-    if (
-      !customerName ||
-      !customerEmail ||
-      !customerPhone ||
-      !address ||
-      !Array.isArray(items) ||
-      items.length === 0
-    ) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Invalid order details",
-        },
-        { status: 400 }
-      );
-    }
-
-    const menuItemIds = items.map((item: { id: string }) => item.id);
-
-    const menuItems = await prisma.menuItem.findMany({
-      where: {
-        id: {
-          in: menuItemIds,
-        },
-        available: true,
-      },
-    });
-
-    if (menuItems.length !== items.length) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "One or more menu items are unavailable.",
-        },
-        { status: 400 }
-      );
-    }
-
-    const orderItems = items.map(
-      (item: { id: string; quantity: number }) => {
-        const menuItem = menuItems.find(
-          (menuItem) => menuItem.id === item.id
-        );
-
-        if (!menuItem) {
-          throw new Error("Menu item not found");
-        }
-
-        const quantity = Number(item.quantity);
-
-        if (!Number.isInteger(quantity) || quantity <= 0) {
-          throw new Error("Invalid item quantity");
-        }
-
-        return {
-          menuItemId: menuItem.id,
-          itemName: menuItem.name,
-          price: menuItem.price,
-          quantity,
-          subtotal: menuItem.price * quantity,
-        };
-      }
-    );
-
-    const subtotal = orderItems.reduce(
-      (total, item) => total + item.subtotal,
-      0
-    );
-
-    const deliveryFee = subtotal > 499 ? 0 : 40;
-
-    const tax = subtotal * 0.05;
-
-    const total = subtotal + deliveryFee + tax;
-
-    const orderNumber = `ORD-${Date.now()}`;
-
-    const order = await prisma.order.create({
-      data: {
-        orderNumber,
-        customerName,
-        customerEmail,
-        customerPhone,
-        address,
-        subtotal,
-        tax,
-        deliveryFee,
-        total,
-        status: "PENDING",
-
-        items: {
-          create: orderItems,
-        },
-      },
-
-      include: {
-        items: true,
-      },
-    });
-
-    return NextResponse.json(
-      {
-        success: true,
-        message: "Order placed successfully",
-        order,
-      },
-      { status: 201 }
-    );
-  } catch (error) {
-    console.error("Create order error:", error);
-
-    return NextResponse.json(
-      {
-        success: false,
-        message:
-          error instanceof Error
-            ? error.message
-            : "Failed to place order",
-      },
-      { status: 500 }
-    );
-  }
+datasource db {
+provider = "postgresql"
 }
 
+model User {
+id        String     @id @default(cuid())
+email     String     @unique
+name      String?
+createdAt DateTime   @default(now())
+updatedAt DateTime   @updatedAt
+
+favorites Favorite[]
+}
+
+model Favorite {
+id        String   @id @default(cuid())
+userId    String
+menuItemId String
+createdAt DateTime @default(now())
+
+user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+menuItem MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+
+@@unique([userId, menuItemId])
+}
+
+model Restaurant {
+id           String     @id @default(cuid())
+name         String
+slug         String     @unique
+description  String?
+image        String?
+address      String?
+phone        String?
+latitude     Float?
+longitude    Float?
+rating       Float      @default(0)
+deliveryTime Int?
+deliveryFee  Float      @default(0)
+isOpen       Boolean    @default(true)
+createdAt    DateTime   @default(now())
+updatedAt    DateTime   @updatedAt
+
+menuItems    MenuItem[]
+}
+
+model Category {
+id        String     @id @default(cuid())
+name      String
+slug      String     @unique
+sortOrder Int        @default(0)
+createdAt DateTime   @default(now())
+
+menuItems MenuItem[]
+}
+
+model MenuItem {
+id          String     @id @default(cuid())
+name        String
+description String?
+price       Float
+image       String?
+available   Boolean    @default(true)
+cuisine     String?
+dietType    String?
+spiceLevel  String?
+rating      Float      @default(0)
+ratingCount Int        @default(0)
+popularity  Int        @default(0)
+categoryId  String
+restaurantId String
+createdAt   DateTime   @default(now())
+updatedAt   DateTime   @updatedAt
+
+category    Category   @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+restaurant  Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+orderItems  OrderItem[]
+favorites   Favorite[]
+}
+
+model Order {
+id            String      @id @default(cuid())
+orderNumber   String      @unique
+customerName  String
+customerEmail String
+customerPhone String
+address       String
+subtotal      Float
+tax           Float
+deliveryFee   Float
+total         Float
+status        OrderStatus @default(PENDING)
+createdAt     DateTime    @default(now())
+updatedAt     DateTime    @updatedAt
+
+items         OrderItem[]
+}
+
+model OrderItem {
+id         String   @id @default(cuid())
+orderId    String
+menuItemId String
+itemName   String
+price      Float
+quantity   Int
+subtotal   Float
+
+order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+menuItem   MenuItem @relation(fields: [menuItemId], references: [id])
+}
+
+enum OrderStatus {
+PENDING
+ACCEPTED
+PREPARING
+COMPLETED
+CANCELLED
+}
